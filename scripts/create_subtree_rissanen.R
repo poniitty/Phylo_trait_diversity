@@ -82,7 +82,7 @@ spn$species[which(!spn$species %in% GBOTB.extended$tip.label)]
 
 # GBOTB.extended$tip.label[grepl("glacialis",GBOTB.extended$tip.label)]
 # td$species[grepl("glacialis",td$species)]
-GBOTB.extended$tip.label[grepl("Dryopteris_", GBOTB.extended$tip.label)] %>% sort()
+GBOTB.extended$tip.label[grepl("_atropurpurea", GBOTB.extended$tip.label)] %>% sort()
 
 # This is how you can change a single species name in the data
 spn %>% mutate(species = ifelse(species == "Silene_flos_cuculi", "Silene_flos-cuculi", species)) -> spn
