@@ -56,14 +56,14 @@ unique(d$species)[!unique(d$species) %in% all_names$species]
 ###############################################################
 # Read community data
 
-cd <- read_csv2("comm_data/Community_data_Rissanen.csv")
+cd <- read_csv("comm_data/Community_data_aa.csv")
 
 # There are both Deschampsia_atropurpurea and Vahlodea_atropurpurea in the original comm data
 #  Only one of those should be selected
 sum(cd$Vahlodea_atropurpurea)
 sum(cd$Deschampsia_atropurpurea)
 # Vahlodea_atropurpurea selected
-cd %>% select(-Deschampsia_atropurpurea) -> cd
+# cd %>% select(-Deschampsia_atropurpurea) -> cd
 
 # Function to replace second occurence of specified character string
 # e.g. "Silene_flos_cuculi" to "Silene_flos-cuculi"
@@ -85,7 +85,7 @@ replace_second_ <- function(x, strch, repl_chr){
 names(cd)[5:ncol(cd)] <- replace_second_(names(cd)[5:ncol(cd)], strch = "_", repl_chr = "-")
 
 # Exctract names of the study species
-sp_names <- names(cd)[5:ncol(cd)]
+sp_names <- names(cd)[2:ncol(cd)]
 
 # Check which one are missing from the trait data
 missing_traits_sp <- sp_names[!sp_names %in% d$species]
@@ -107,11 +107,11 @@ for(i in missing_traits_sp){
   
 }
 
-sp_names <- names(cd)[5:ncol(cd)]
+sp_names <- names(cd)[2:ncol(cd)]
 
 missing_traits_sp <- sp_names[!sp_names %in% d$species] 
 missing_traits_sp
-# 40 species (+ 2 genus level taxa) has no trait data, these will be dropped from further trait based analyses
+# 19 species has no trait data, these will be dropped from further trait based analyses
 
 cd %>% select(-missing_traits_sp) -> cd
 
@@ -142,7 +142,7 @@ summary(prcomp(traits[,2:ncol(traits)]))
 cor(traits[,2:NCOL(traits)])
 
 # These steps are to make sure that the community and trait data are at similar order
-sp_names <- names(cd)[5:ncol(cd)]
+sp_names <- names(cd)[2:ncol(cd)]
 sp_names <- sort(sp_names)
 
 traits %>% arrange(species) %>% 
@@ -157,15 +157,14 @@ min(sp_names == traits$species) # Should be 1
 
 # TRAIT DENDROGRAM
 trait.clust <- hclust(dist(traits[,2:NCOL(traits)]), method="average")
-plot(trait.clust)
-
+# plot(trait.clust)
 
 # Function to calculate multiple FD indices with multiple CPUs
 fd_parallel <- function(com, trait){
   
   com <- com[,rownames(trait)]
   
-  num_splits<-cores*3
+  num_splits<-cores*1
   split_testing<-sort(rank(1:nrow(com))%%num_splits)
   
   jo <- foreach(ii=unique(split_testing), .combine=rbind,
@@ -200,7 +199,7 @@ cores <- 1
 # Calculate indices in parallel
 cl <- parallel::makeCluster(cores)
 doParallel::registerDoParallel(cl)
-true <- fd_parallel(com = cd[rowSums(cd[,sp_names] > 0) > 0,sp_names] %>% slice_head(n = 200),
+true <- fd_parallel(com = cd[rowSums(cd[,sp_names] > 0) > 0,sp_names],
                     trait = traits[,2:NCOL(traits)])
 parallel::stopCluster(cl)
 
@@ -208,22 +207,13 @@ parallel::stopCluster(cl)
 # Variables of special interest
 keep <- c("FDpg","FDw","FRic","FEve","FDis","RaoQ")
 
-# Mean of the above specified indices
-true$fdmean <- rowMeans(apply(true[,keep], 2, function(x) rescale(x, to = c(0, 1))))
-
-# PCA-1 for the above specified indices
-true$fdpca <- NA
-true$fdpca[complete.cases(true[,keep])] <- prcomp(apply(true[complete.cases(true[,keep]),keep], 2, function(x) rescale(x, to = c(0, 1))), scale = F)$x[,"PC1"]
-true$fdpca <- rescale(true$fdpca, to = c(0, 1))
-
 # Combine with plot ids etc...
-true <- bind_cols(cd[rowSums(cd[,sp_names] > 0) > 0,1:4], true)
+true <- bind_cols(cd[rowSums(cd[,sp_names] > 0) > 0,1], true)
 
 # test which are strongly correlated
-round(cor(true[,8:NCOL(true)], use = "pairwise.complete.obs"),3)
 round(cor(true[,c("n_sp", keep)], use = "pairwise.complete.obs"),3)
 
 
-write_csv(true, "outputs/FD_indices.csv")
+write_csv(true, "outputs/FD_indices_AA.csv")
 
 
