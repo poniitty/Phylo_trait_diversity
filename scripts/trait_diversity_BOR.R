@@ -56,7 +56,7 @@ unique(d$species)[!unique(d$species) %in% all_names$species]
 ###############################################################
 # Read community data
 
-cd <- read_csv("comm_data/Community_data_bor.csv")
+cd <- read_csv("comm_data/Community_data_bor_new.csv")
 
 # Function to replace second occurence of specified character string
 # e.g. "Silene_flos_cuculi" to "Silene_flos-cuculi"
@@ -104,7 +104,7 @@ sp_names <- names(cd)[2:ncol(cd)]
 
 missing_traits_sp <- sp_names[!sp_names %in% d$species] 
 missing_traits_sp
-# 15 species has no trait data, these will be dropped from further trait based analyses
+# 17 species has no trait data, these will be dropped from further trait based analyses
 
 cd %>% select(-missing_traits_sp) -> cd
 
@@ -206,6 +206,7 @@ true <- bind_cols(cd[rowSums(cd[,sp_names] > 0) > 0,1], true)
 # test which are strongly correlated
 round(cor(true[,c("n_sp", keep)], use = "pairwise.complete.obs"),3)
 
+# true %>% filter(!complete.cases(.)) %>% edit()
 
 write_csv(true, "outputs/FD_indices_BOR.csv")
 
